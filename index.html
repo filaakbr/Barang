@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purchasing Order - Toko Bejo ATK</title>
+
+<!-- Library Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+
+<!-- Library PDF: teks tajam dan tabel dengan pagination stabil -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+}
+
+h1 {
+    margin-bottom: 5px;
+    color: #166534;
+}
+
+.subtitle {
+    margin-top: 0;
+    color: #64748b;
+}
+
+.card {
+    background: #fff;
+    padding: 20px;
+    margin: 18px 0;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px #0000000c;
+}
+
+h2 {
+    margin-top: 0;
+    font-size: 19px;
+    color: #166534;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field.full {
+    grid-column: 1 / -1;
+}
+
+label {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 70px;
+}
+
+input:focus, textarea:focus {
+    outline: 2px solid #86efac;
+    border-color: #16a34a;
+}
+
+button {
+    border: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+button:hover {
+    filter: brightness(.94);
+}
+
+button:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+.btn-green {
+    background: #16a34a;
+    color: white;
+}
+
+.btn-blue {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-orange {
+    background: #ea580c;
+    color: white;
+}
+
+.btn-red {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-light {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.upload-box {
+    padding: 15px;
+    border: 2px dashed #86efac;
+    border-radius: 8px;
+    background: #f0fdf4;
+}
+
+.upload-box p {
+    margin: 8px 0;
+    font-size: 13px;
+    color: #475569;
+}
+
+.product-form {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+th, td {
+    border: 1px solid #cbd5e1;
+    padding: 9px;
+    text-align: left;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+}
+
+th {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.center {
+    text-align: center;
+}
+
+.actions {
+    white-space: nowrap;
+}
+
+.actions button {
+    margin: 2px;
+    padding: 7px 9px;
+}
+
+.empty {
+    text-align: center;
+    color: #64748b;
+    padding: 25px;
+}
+
+.status {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #166534;
+    overflow-wrap: anywhere;
+}
+
+.note {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    inset: 0;
+    background: #0009;
+    padding: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 500px;
+    background: white;
+    padding: 22px;
+    border-radius: 12px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content h2 {
+    margin-bottom: 18px;
+}
+
+.modal-fields {
+    display: grid;
+    gap: 13px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+@media (max-width: 700px) {
+    body {
+        padding: 10px;
+    }
+
+    .form-grid,
+    .product-form {
+        grid-template-columns: 1fr;
+    }
+
+    .field.full {
+        grid-column: auto;
+    }
+
+    .card {
+        padding: 14px;
+    }
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <header class="no-print">
+        <h1>Purchasing Order</h1>
+        <p class="subtitle">Toko Bejo ATK — Formulir Pemesanan Barang</p>
+    </header>
+
+    <!-- UPLOAD EXCEL -->
+    <section class="card no-print">
+        <h2>Upload Excel untuk Edit</h2>
+
+        <div class="upload-box">
+            <label for="excelUpload">Pilih file Excel (.xlsx atau .xls)</label>
+
+            <input
+                type="file"
+                id="excelUpload"
+                accept=".xlsx,.xls"
+                style="margin-top:8px"
+            >
+
+            <p>
+                Gunakan file Excel yang pernah diunduh dari aplikasi
+                untuk memuat kembali data PO dan mengedit barang.
+            </p>
+
+            <div class="toolbar">
+                <button type="button" class="btn-blue" onclick="uploadExcel()">
+                    Upload dan Muat Data
+                </button>
+
+                <button type="button" class="btn-light" onclick="clearUpload()">
+                    Batal Pilih File
+                </button>
+            </div>
+
+            <div id="uploadStatus" class="status" aria-live="polite"></div>
+        </div>
+    </section>
+
+    <!-- INFORMASI PO -->
+    <section class="card no-print">
+        <h2>Informasi Purchasing Order</h2>
+
+        <div class="form-grid">
+            <div class="field">
+                <label for="supplier">Nama Pemasok</label>
+                <input id="supplier" type="text" placeholder="Nama pemasok">
+            </div>
+
+            <div class="field">
+                <label for="date">Tanggal</label>
+                <input id="date" type="date">
+            </div>
+
+            <div class="field full">
+                <label for="address">Alamat Pemasok</label>
+                <textarea id="address" placeholder="Alamat pemasok"></textarea>
+            </div>
+
+            <div class="field">
+                <label for="poNumber">Nomor PO</label>
+                <input id="poNumber" type="text" placeholder="Contoh: PO/001/2026">
+            </div>
+
+            <div class="field">
+                <label for="up">UP</label>
+                <input id="up" type="text" placeholder="Nama penerima atau bagian">
+            </div>
+
+            <div class="field">
+                <label for="signer">Nama Penanda Tangan</label>
+                <input id="signer" type="text" placeholder="Nama penanda tangan">
+            </div>
+        </div>
+    </section>
+
+    <!-- TAMBAH BARANG -->
+    <section class="card no-print">
+        <h2>Tambah Barang</h2>
+
+        <div class="product-form">
+            <div class="field">
+                <label for="productName">Nama Barang</label>
+                <input id="productName" type="text" placeholder="Nama barang">
+            </div>
+
+            <div class="field">
+                <label for="productPlan">Rencana Order</label>
+                <input id="productPlan" type="text" placeholder="Jumlah/keterangan">
+            </div>
+
+            <div class="field">
+                <label for="productStock">Stok Toko</label>
+                <input id="productStock" type="text" placeholder="Jumlah/keterangan">
+            </div>
+
+            <button type="button" class="btn-green" onclick="addProduct()">
+                + Tambah Barang
+            </button>
+        </div>
+
+        <p class="note">
+            Rencana Order dan Stok Toko menggunakan teks agar dapat diisi
+            dengan angka, satuan, maupun keterangan.
+        </p>
+    </section>
+
+    <!-- DAFTAR BARANG -->
+    <section class="card no-print">
+        <h2>Daftar Barang</h2>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="center" style="width:50px">No.</th>
+                        <th>Nama Barang</th>
+                        <th>Rencana Order</th>
+                        <th>Stok Toko</th>
+                        <th class="center" style="width:145px">Aksi</th>
+                    </tr>
+                </thead>
+
+                <tbody id="productTable"></tbody>
+            </table>
+        </div>
+
+        <p id="productCount" class="note">Jumlah barang: 0</p>
+    </section>
+
+    <!-- AKSI -->
+    <section class="card no-print">
+        <h2>Aksi Purchasing Order</h2>
+
+        <div class="toolbar">
+            <button type="button" class="btn-green" id="btnExcel" onclick="downloadExcel()">
+                Unduh Excel
+            </button>
+
+            <button type="button" class="btn-red" id="btnPDF" onclick="downloadPDF()">
+                Unduh PDF
+            </button>
+
+            <button type="button" class="btn-blue" onclick="printPO()">
+                Cetak
+            </button>
+
+            <button type="button" class="btn-orange" onclick="resetForm()">
+                Reset Formulir
+            </button>
+        </div>
+
+        <p class="note">
+            Excel dan PDF dibuat sebagai dokumen terpisah, sehingga
+            aplikasi tidak memerlukan bagian pratinjau dokumen.
+        </p>
+    </section>
+
+</div>
+
+<!-- POPUP EDIT -->
+<div id="editModal" class="modal no-print" role="dialog"
+     aria-modal="true" aria-labelledby="editTitle">
+
+    <div class="modal-content">
+        <h2 id="editTitle">Edit Barang</h2>
+
+        <input type="hidden" id="editIndex">
+
+        <div class="modal-fields">
+            <div class="field">
+                <label for="editName">Nama Barang</label>
+                <input id="editName" type="text">
+            </div>
+
+            <div class="field">
+                <label for="editPlan">Rencana Order</label>
+                <input id="editPlan" type="text">
+            </div>
+
+            <div class="field">
+                <label for="editStock">Stok Toko</label>
+                <input id="editStock" type="text">
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="btn-light" onclick="closeEdit()">
+                Batal
+            </button>
+
+            <button type="button" class="btn-green" onclick="saveEdit()">
+                Simpan Perubahan
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+"use strict";
+
+// ==================================================
+// DATA DAN UTILITAS
+// ==================================================
+
+let products = [];
+
+const $ = id => document.getElementById(id);
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+function getValue(id) {
+    return $(id).value.trim();
+}
+
+function setValue(id, value) {
+    $(id).value = value == null ? "" : String(value);
+}
+
+function getPOInfo() {
+    return {
+        supplier: getValue("supplier"),
+        date: getValue("date"),
+        address: getValue("address"),
+        poNumber: getValue("poNumber"),
+        up: getValue("up"),
+        signer: getValue("signer")
+    };
+}
+
+function setPOInfo(info) {
+    setValue("supplier", info.supplier);
+    setValue("date", info.date);
+    setValue("address", info.address);
+    setValue("poNumber", info.poNumber);
+    setValue("up", info.up);
+    setValue("signer", info.signer);
+}
+
+function formatDate(value) {
+    if (!value) return "-";
+
+    const parts = String(value).split("-");
+
+    if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    return value;
+}
+
+function safeFilename(value) {
+    return String(value || "Purchasing_Order")
+        .replace(/[\\/:*?"<>|]/g, "_")
+        .replace(/\s+/g, "_")
+        .slice(0, 80);
+}
+
+function requireXLSX() {
+    if (typeof XLSX === "undefined") {
+        alert("Library pembaca Excel belum termuat. Periksa internet lalu muat ulang halaman.");
+        return false;
+    }
+
+    return true;
+}
+
+function requireExcelJS() {
+    if (typeof ExcelJS === "undefined") {
+        alert("Library pembuat Excel belum termuat. Periksa internet lalu muat ulang halaman.");
+        return false;
+    }
+
+    return true;
+}
+
+// ==================================================
+// TAMBAH, EDIT, HAPUS BARANG
+// ==================================================
+
+function addProduct() {
+    const name = getValue("productName");
+
+    if (!name) {
+        alert("Silakan isi nama barang terlebih dahulu.");
+        $("productName").focus();
+        return;
+    }
+
+    products.push({
+        name,
+        plan: getValue("productPlan"),
+        stock: getValue("productStock")
+    });
+
+    setValue("productName", "");
+    setValue("productPlan", "");
+    setValue("productStock", "");
+
+    renderProducts();
+    $("productName").focus();
+}
+
+function renderProducts() {
+    const tbody = $("productTable");
+
+    if (!products.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="empty">Belum ada barang.</td>
+            </tr>`;
+    } else {
+        tbody.innerHTML = products.map((p, i) => `
+            <tr>
+                <td class="center">${i + 1}</td>
+                <td>${escapeHTML(p.name)}</td>
+                <td>${escapeHTML(p.plan)}</td>
+                <td>${escapeHTML(p.stock)}</td>
+                <td class="actions center">
+                    <button type="button" class="btn-blue"
+                        onclick="openEdit(${i})">Edit</button>
+                    <button type="button" class="btn-red"
+                        onclick="deleteProduct(${i})">Hapus</button>
+                </td>
+            </tr>`).join("");
+    }
+
+    $("productCount").textContent = "Jumlah barang: " + products.length;
+}
+
+function openEdit(index) {
+    if (!products[index]) return;
+
+    setValue("editIndex", index);
+    setValue("editName", products[index].name);
+    setValue("editPlan", products[index].plan);
+    setValue("editStock", products[index].stock);
+
+    $("editModal").style.display = "flex";
+    $("editName").focus();
+}
+
+function closeEdit() {
+    $("editModal").style.display = "none";
+}
+
+function saveEdit() {
+    const index = Number($("editIndex").value);
+    const name = getValue("editName");
+
+    if (!Number.isInteger(index) || !products[index]) {
+        alert("Data barang tidak ditemukan.");
+        closeEdit();
+        return;
+    }
+
+    if (!name) {
+        alert("Nama barang tidak boleh kosong.");
+        $("editName").focus();
+        return;
+    }
+
+    products[index] = {
+        name,
+        plan: getValue("editPlan"),
+        stock: getValue("editStock")
+    };
+
+    closeEdit();
+    renderProducts();
+}
+
+function deleteProduct(index) {
+    if (!products[index]) return;
+
+    if (confirm(`Hapus barang "${products[index].name}"?`)) {
+        products.splice(index, 1);
+        renderProducts();
+    }
+}
+
+$("editModal").addEventListener("click", event => {
+    if (event.target === $("editModal")) closeEdit();
+});
+
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape") closeEdit();
+});
+
+// ==================================================
+// TEMPLATE DATA EXCEL
+// Format ini tetap kompatibel dengan fitur upload.
+// ==================================================
+
+function createExcelRows() {
+    const info = getPOInfo();
+
+    return [
+        ["PURCHASING ORDER"],
+        ["Toko", "Toko Bejo ATK"],
+        ["Nama Pemasok", info.supplier],
+        ["Tanggal", info.date],
+        ["Alamat", info.address],
+        ["Nomor PO", info.poNumber],
+        ["UP", info.up],
+        ["Penanda Tangan", info.signer],
+        [],
+        ["No.", "Nama Barang", "Rencana Order", "Stok Toko"],
+        ...products.map((p, i) => [
+            String(i + 1),
+            String(p.name ?? ""),
+            String(p.plan ?? ""),
+            String(p.stock ?? "")
+        ])
+    ];
+}
+
+// ==================================================
+// UNDUH EXCEL DENGAN FORMAT RAPI
+// ==================================================
+
+async function downloadExcel() {
+    if (!requireExcelJS()) return;
+
+    const button = $("btnExcel");
+    button.disabled = true;
+    button.textContent = "Membuat Excel...";
+
+    try {
+        const info = getPOInfo();
+        const workbook = new ExcelJS.Workbook();
+
+        workbook.creator = "Toko Bejo ATK";
+        workbook.subject = "Purchasing Order";
+        workbook.title = "Purchasing Order";
+        workbook.created = new Date();
+
+        const sheet = workbook.addWorksheet("Purchasing Order", {
+            pageSetup: {
+                paperSize: 9,
+                orientation: "portrait",
+                fitToPage: true,
+                fitToWidth: 1,
+                fitToHeight: 0,
+                margins: {
+                    left: 0.25,
+                    right: 0.25,
+                    top: 0.5,
+                    bottom: 0.5,
+                    header: 0.2,
+                    footer: 0.2
+                }
+            },
+            views: [{ state: "frozen", ySplit: 10 }]
+        });
+
+        sheet.columns = [
+            { key: "no", width: 8 },
+            { key: "name", width: 38 },
+            { key: "plan", width: 22 },
+            { key: "stock", width: 22 }
+        ];
+
+        // Judul
+        sheet.mergeCells("A1:D1");
+        sheet.getCell("A1").value = "PURCHASING ORDER";
+        sheet.getCell("A1").font = {
+            name: "Arial",
+            size: 18,
+            bold: true,
+            color: { argb: "FF166534" }
+        };
+        sheet.getCell("A1").alignment = {
+            horizontal: "center",
+            vertical: "middle"
+        };
+        sheet.getRow(1).height = 32;
+
+        sheet.mergeCells("A2:D2");
+        sheet.getCell("A2").value = "TOKO BEJO ATK";
+        sheet.getCell("A2").font = {
+            name: "Arial",
+            size: 12,
+            bold: true
+        };
+        sheet.getCell("A2").alignment = {
+            horizontal: "center",
+            vertical: "middle"
+        };
+        sheet.getRow(2).height = 23;
+
+        // Informasi PO
+        const metadata = [
+            ["Nama Pemasok", info.supplier],
+            ["Tanggal", info.date],
+            ["Alamat", info.address],
+            ["Nomor PO", info.poNumber],
+            ["UP", info.up],
+            ["Penanda Tangan", info.signer]
+        ];
+
+        metadata.forEach((item, i) => {
+            const rowNumber = i + 4;
+
+            sheet.mergeCells(`B${rowNumber}:D${rowNumber}`);
+
+            const labelCell = sheet.getCell(`A${rowNumber}`);
+            const valueCell = sheet.getCell(`B${rowNumber}`);
+
+            labelCell.value = item[0];
+            valueCell.value = item[1] || "";
+
+            labelCell.font = { name: "Arial", size: 10, bold: true };
+            valueCell.font = { name: "Arial", size: 10 };
+
+            labelCell.alignment = {
+                vertical: "top",
+                wrapText: true
+            };
+
+            valueCell.alignment = {
+                vertical: "top",
+                wrapText: true
+            };
+
+            [labelCell, valueCell].forEach(cell => {
+                cell.border = {
+                    bottom: {
+                        style: "hair",
+                        color: { argb: "FFD1D5DB" }
+                    }
+                };
+            });
+
+            const length = String(item[1] || "").length;
+            sheet.getRow(rowNumber).height =
+                item[0] === "Alamat"
+                    ? Math.max(30, Math.ceil(length / 65) * 16)
+                    : 21;
+        });
+
+        // Header tabel
+        const headerRowNumber = 11;
+        const headerRow = sheet.getRow(headerRowNumber);
+
+        headerRow.values = [
+            "No.",
+            "Nama Barang",
+            "Rencana Order",
+            "Stok Toko"
+        ];
+
+        headerRow.height = 28;
+
+        headerRow.eachCell(cell => {
+            cell.font = {
+                name: "Arial",
+                size: 10,
+                bold: true,
+                color: { argb: "FFFFFFFF" }
+            };
+
+            cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FF166534" }
+            };
+
+            cell.alignment = {
+                horizontal: "center",
+                vertical: "middle",
+                wrapText: true
+            };
+
+            cell.border = {
+                top: { style: "thin", color: { argb: "FF166534" } },
+                bottom: { style: "thin", color: { argb: "FF166534" } },
+                left: { style: "thin", color: { argb: "FF166534" } },
+                right: { style: "thin", color: { argb: "FF166534" } }
+            };
+        });
+
+        // Isi tabel barang
+        products.forEach((p, i) => {
+            const rowNumber = headerRowNumber + i + 1;
+            const row = sheet.getRow(rowNumber);
+
+            row.values = [
+                String(i + 1),
+                String(p.name ?? ""),
+                String(p.plan ?? ""),
+                String(p.stock ?? "")
+            ];
+
+            row.eachCell(cell => {
+                cell.font = {
+                    name: "Arial",
+                    size: 10,
+                    color: { argb: "FF111827" }
+                };
+
+                cell.alignment = {
+                    vertical: "top",
+                    wrapText: true,
+                    horizontal: cell.col === 1 ? "center" : "left"
+                };
+
+                cell.border = {
+                    top: { style: "thin", color: { argb: "FFD1D5DB" } },
+                    bottom: { style: "thin", color: { argb: "FFD1D5DB" } },
+                    left: { style: "thin", color: { argb: "FFD1D5DB" } },
+                    right: { style: "thin", color: { argb: "FFD1D5DB" } }
+                };
+
+                if (i % 2 === 1) {
+                    cell.fill = {
+                        type: "pattern",
+                        pattern: "solid",
+                        fgColor: { argb: "FFF0FDF4" }
+                    };
+                }
+            });
+
+            const longest = Math.max(
+                String(p.name ?? "").length,
+                String(p.plan ?? "").length,
+                String(p.stock ?? "").length
+            );
+
+            row.height = Math.max(22, Math.min(72, Math.ceil(longest / 35) * 16));
+        });
+
+        sheet.autoFilter = {
+            from: "A11",
+            to: `D${Math.max(11, 11 + products.length)}`
+        };
+
+        sheet.pageSetup.printArea =
+            `A1:D${Math.max(11, 11 + products.length)}`;
+
+        sheet.pageSetup.horizontalCentered = true;
+        sheet.properties.defaultRowHeight = 20;
+
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        const blob = new Blob(
+            [buffer],
+            {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            }
+        );
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = safeFilename(info.poNumber || "Purchasing_Order") + ".xlsx";
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+    } catch (error) {
+        console.error(error);
+        alert("Gagal membuat Excel. Periksa koneksi internet lalu coba kembali.");
+    } finally {
+        button.disabled = false;
+        button.textContent = "Unduh Excel";
+    }
+}
+
+// ==================================================
+// UPLOAD EXCEL
+// ==================================================
+
+function clearUpload() {
+    $("excelUpload").value = "";
+    $("uploadStatus").textContent = "";
+}
+
+function normalizeHeader(value) {
+    return String(value ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/[\s_-]+/g, "");
+}
+
+function findHeaderIndex(headers, aliases) {
+    const normalized = headers.map(normalizeHeader);
+
+    for (const alias of aliases) {
+        const index = normalized.indexOf(normalizeHeader(alias));
+        if (index !== -1) return index;
+    }
+
+    return -1;
+}
+
+function cellString(value) {
+    if (value === null || value === undefined) return "";
+
+    if (typeof value === "object" && value.text !== undefined) {
+        return String(value.text).trim();
+    }
+
+    if (typeof value === "object" && value.result !== undefined) {
+        return String(value.result).trim();
+    }
+
+    return String(value).trim();
+}
+
+function excelDateToInput(value) {
+    if (value === null || value === undefined || value === "") return "";
+
+    if (value instanceof Date && !isNaN(value.getTime())) {
+        const y = value.getFullYear();
+        const m = String(value.getMonth() + 1).padStart(2, "0");
+        const d = String(value.getDate()).padStart(2, "0");
+
+        return `${y}-${m}-${d}`;
+    }
+
+    if (
+        typeof value === "number" &&
+        value > 20000 &&
+        value < 80000 &&
+        typeof XLSX !== "undefined"
+    ) {
+        const parsed = XLSX.SSF.parse_date_code(value);
+
+        if (parsed) {
+            return `${parsed.y}-${String(parsed.m).padStart(2, "0")}-${String(parsed.d).padStart(2, "0")}`;
+        }
+    }
+
+    const str = String(value).trim();
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
+    const match = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+
+    if (match) {
+        return `${match[3]}-${String(match[2]).padStart(2, "0")}-${String(match[1]).padStart(2, "0")}`;
+    }
+
+    return "";
+}
+
+function locateProductHeader(rows) {
+    for (let i = 0; i < Math.min(rows.length, 100); i++) {
+        const row = rows[i] || [];
+
+        const nameIndex = findHeaderIndex(row, [
+            "Nama Barang", "Barang", "Nama Produk", "Produk", "Item"
+        ]);
+
+        const planIndex = findHeaderIndex(row, [
+            "Rencana Order", "Rencana", "Order", "Jumlah Order"
+        ]);
+
+        const stockIndex = findHeaderIndex(row, [
+            "Stok Toko", "Stok", "Stock"
+        ]);
+
+        if (nameIndex !== -1 && (planIndex !== -1 || stockIndex !== -1)) {
+            return {
+                rowIndex: i,
+                nameIndex,
+                planIndex,
+                stockIndex
+            };
+        }
+    }
+
+    return null;
+}
+
+function readMetadata(rows) {
+    const metadata = {
+        supplier: "",
+        date: "",
+        address: "",
+        poNumber: "",
+        up: "",
+        signer: ""
+    };
+
+    const mapping = [
+        { key: "supplier", labels: ["Nama Pemasok", "Pemasok", "Supplier"] },
+        { key: "date", labels: ["Tanggal", "Tanggal PO", "Date"] },
+        { key: "address", labels: ["Alamat", "Alamat Pemasok", "Address"] },
+        { key: "poNumber", labels: ["Nomor PO", "No PO", "PO Number"] },
+        { key: "up", labels: ["UP", "Untuk Perhatian"] },
+        { key: "signer", labels: ["Penanda Tangan", "Nama Penanda Tangan"] }
+    ];
+
+    rows.forEach(row => {
+        if (!row) return;
+
+        mapping.forEach(item => {
+            if (metadata[item.key]) return;
+
+            for (const label of item.labels) {
+                const idx = row.findIndex(cell =>
+                    normalizeHeader(cell) === normalizeHeader(label)
+                );
+
+                if (idx !== -1 && idx + 1 < row.length) {
+                    metadata[item.key] = cellString(row[idx + 1]);
+                    break;
+                }
+            }
+        });
+    });
+
+    metadata.date = excelDateToInput(metadata.date);
+    return metadata;
+}
+
+async function uploadExcel() {
+    if (!requireXLSX()) return;
+
+    const file = $("excelUpload").files[0];
+
+    if (!file) {
+        alert("Pilih file Excel terlebih dahulu.");
+        return;
+    }
+
+    const extension = file.name.split(".").pop().toLowerCase();
+
+    if (!["xlsx", "xls"].includes(extension)) {
+        alert("Pilih file Excel dengan ekstensi .xlsx atau .xls.");
+        return;
+    }
+
+    $("uploadStatus").textContent = "Membaca file Excel...";
+
+    try {
+        const buffer = await file.arrayBuffer();
+
+        const workbook = XLSX.read(buffer, {
+            type: "array",
+            cellDates: true
+        });
+
+        if (!workbook.SheetNames.length) {
+            throw new Error("Workbook tidak memiliki sheet.");
+        }
+
+        const preferredSheet = workbook.SheetNames.find(name =>
+            normalizeHeader(name) === normalizeHeader("Purchasing Order")
+        );
+
+        const sheetName = preferredSheet || workbook.SheetNames[0];
+
+        const rows = XLSX.utils.sheet_to_json(
+            workbook.Sheets[sheetName],
+            {
+                header: 1,
+                defval: "",
+                raw: true
+            }
+        );
+
+        const header = locateProductHeader(rows);
+
+        if (!header) {
+            throw new Error(
+                "Header barang tidak ditemukan. Pastikan terdapat kolom " +
+                "Nama Barang dan Rencana Order atau Stok Toko."
+            );
+        }
+
+        const info = readMetadata(rows);
+        const importedProducts = [];
+
+        for (let i = header.rowIndex + 1; i < rows.length; i++) {
+            const row = rows[i] || [];
+
+            const name = cellString(row[header.nameIndex]);
+            const plan = header.planIndex !== -1
+                ? cellString(row[header.planIndex])
+                : "";
+
+            const stock = header.stockIndex !== -1
+                ? cellString(row[header.stockIndex])
+                : "";
+
+            if (!name && !plan && !stock) continue;
+            if (!name) continue;
+
+            importedProducts.push({ name, plan, stock });
+        }
+
+        if (!importedProducts.length) {
+            throw new Error("Tidak ditemukan data barang yang dapat diimpor.");
+        }
+
+        const confirmed = confirm(
+            `File: ${file.name}\n` +
+            `Barang ditemukan: ${importedProducts.length}\n\n` +
+            "Data formulir yang sedang terbuka akan diganti dengan data dari file. Lanjutkan?"
+        );
+
+        if (!confirmed) {
+            $("uploadStatus").textContent = "Upload dibatalkan.";
+            return;
+        }
+
+        setPOInfo(info);
+        products = importedProducts;
+
+        renderProducts();
+
+        $("uploadStatus").textContent =
+            `Berhasil memuat ${products.length} barang dari ${file.name}.`;
+
+    } catch (error) {
+        console.error(error);
+
+        $("uploadStatus").textContent =
+            "Gagal memuat file: " + error.message;
+
+        alert("Gagal mengimpor Excel.\n\n" + error.message);
+    }
+}
+
+// ==================================================
+// TEMPLATE DOKUMEN UNTUK PDF DAN CETAK
+// ==================================================
+
+function buildDocumentHTML() {
+    const info = getPOInfo();
+
+    const productRows = products.map((p, i) => `
+        <tr>
+            <td class="number">${i + 1}</td>
+            <td>${escapeHTML(p.name)}</td>
+            <td>${escapeHTML(p.plan)}</td>
+            <td>${escapeHTML(p.stock)}</td>
+        </tr>
+    `).join("");
+
+    return `
+        <div class="po-document">
+            <div class="po-heading">
+                <h1>PURCHASING ORDER</h1>
+                <div class="store-name">TOKO BEJO ATK</div>
+            </div>
+
+            <table class="metadata">
+                <colgroup>
+                    <col style="width:22%">
+                    <col style="width:78%">
+                </colgroup>
+                <tr>
+                    <td class="label">Nama Pemasok</td>
+                    <td>${escapeHTML(info.supplier || "-")}</td>
+                </tr>
+                <tr>
+                    <td class="label">Tanggal</td>
+                    <td>${escapeHTML(formatDate(info.date))}</td>
+                </tr>
+                <tr>
+                    <td class="label">Alamat</td>
+                    <td>${escapeHTML(info.address || "-").replace(/\n/g, "<br>")}</td>
+                </tr>
+                <tr>
+                    <td class="label">Nomor PO</td>
+                    <td>${escapeHTML(info.poNumber || "-")}</td>
+                </tr>
+                <tr>
+                    <td class="label">UP</td>
+                    <td>${escapeHTML(info.up || "-")}</td>
+                </tr>
+            </table>
+
+            <table class="products">
+                <thead>
+                    <tr>
+                        <th class="number">No.</th>
+                        <th>Nama Barang</th>
+                        <th>Rencana Order</th>
+                        <th>Stok Toko</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${productRows || `
+                        <tr>
+                            <td colspan="4" class="empty-row">Belum ada barang</td>
+                        </tr>
+                    `}
+                </tbody>
+            </table>
+
+            <div class="signature">
+                <p>Hormat kami,</p>
+                <div class="signature-space"></div>
+                <p class="signer">${escapeHTML(info.signer || "____________________")}</p>
+            </div>
+        </div>
+    `;
+}
+
+function documentStyles() {
+    return `
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #111827;
+            font-size: 10pt;
+            background: #ffffff;
+        }
+
+        .po-document {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 0;
+        }
+
+        .po-heading {
+            text-align: center;
+            margin: 0 0 24px;
+        }
+
+        .po-heading h1 {
+            font-size: 20pt;
+            line-height: 1.2;
+            margin: 0 0 7px;
+            color: #166534;
+        }
+
+        .store-name {
+            font-size: 11pt;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .metadata {
+            margin-bottom: 22px;
+        }
+
+        .metadata td {
+            padding: 5px 7px;
+            vertical-align: top;
+            border: none;
+            overflow-wrap: anywhere;
+            word-break: normal;
+            line-height: 1.4;
+        }
+
+        .metadata .label {
+            font-weight: bold;
+        }
+
+        .products {
+            font-size: 9pt;
+            margin-top: 5px;
+        }
+
+        .products th,
+        .products td {
+            border: 1px solid #6b7280;
+            padding: 7px;
+            text-align: left;
+            vertical-align: top;
+            overflow-wrap: anywhere;
+            word-break: normal;
+            line-height: 1.35;
+        }
+
+        .products th {
+            background: #dcfce7;
+            color: #14532d;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .products th:nth-child(1),
+        .products td:nth-child(1) {
+            width: 9%;
+        }
+
+        .products th:nth-child(2),
+        .products td:nth-child(2) {
+            width: 39%;
+        }
+
+        .products th:nth-child(3),
+        .products td:nth-child(3) {
+            width: 26%;
+        }
+
+        .products th:nth-child(4),
+        .products td:nth-child(4) {
+            width: 26%;
+        }
+
+        .number {
+            text-align: center !important;
+        }
+
+        .empty-row {
+            text-align: center !important;
+            padding: 16px !important;
+        }
+
+        .signature {
+            width: 45%;
+            min-width: 170px;
+            margin: 30px 0 0 auto;
+            text-align: center;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .signature p {
+            margin: 0;
+        }
+
+        .signature-space {
+            height: 65px;
+        }
+
+        .signer {
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 12mm;
+        }
+    `;
+}
+
+// ==================================================
+// UNDUH PDF
+// ==================================================
+
+async function downloadPDF() {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert("Library PDF belum termuat. Periksa koneksi internet lalu muat ulang halaman.");
+        return;
+    }
+
+    const button = $("btnPDF");
+    button.disabled = true;
+    button.textContent = "Membuat PDF...";
+
+    try {
+        const info = getPOInfo();
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4",
+            compress: true
+        });
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = { left: 14, right: 14, top: 14, bottom: 17 };
+        const contentWidth = pageWidth - margin.left - margin.right;
+
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(22, 101, 52);
+        doc.setFontSize(18);
+        doc.text("PURCHASING ORDER", pageWidth / 2, 20, { align: "center" });
+
+        doc.setTextColor(31, 41, 55);
+        doc.setFontSize(11);
+        doc.text("TOKO BEJO ATK", pageWidth / 2, 27, { align: "center" });
+
+        doc.setDrawColor(22, 101, 52);
+        doc.setLineWidth(0.6);
+        doc.line(margin.left, 31, pageWidth - margin.right, 31);
+
+        const metadataRows = [
+            ["Nama Pemasok", info.supplier || "-"],
+            ["Tanggal", formatDate(info.date)],
+            ["Alamat", info.address || "-"],
+            ["Nomor PO", info.poNumber || "-"],
+            ["UP", info.up || "-"]
+        ];
+
+        doc.autoTable({
+            startY: 35,
+            body: metadataRows,
+            theme: "plain",
+            margin: { left: margin.left, right: margin.right },
+            tableWidth: contentWidth,
+            styles: {
+                font: "helvetica",
+                fontSize: 9,
+                textColor: [31, 41, 55],
+                cellPadding: { top: 1.8, right: 2, bottom: 1.8, left: 2 },
+                overflow: "linebreak",
+                valign: "top",
+                lineWidth: 0
+            },
+            columnStyles: {
+                0: { cellWidth: 37, fontStyle: "bold" },
+                1: { cellWidth: contentWidth - 37 }
+            }
+        });
+
+        const tableStartY = doc.lastAutoTable.finalY + 6;
+        const productBody = products.map((p, i) => [
+            String(i + 1),
+            String(p.name || ""),
+            String(p.plan || ""),
+            String(p.stock || "")
+        ]);
+
+        doc.autoTable({
+            startY: tableStartY,
+            head: [["No.", "Nama Barang", "Rencana Order", "Stok Toko"]],
+            body: productBody.length ? productBody : [["", "Belum ada barang", "", ""]],
+            margin: { left: margin.left, right: margin.right, top: margin.top, bottom: margin.bottom },
+            tableWidth: contentWidth,
+            theme: "grid",
+            showHead: "everyPage",
+            pageBreak: "auto",
+            rowPageBreak: "avoid",
+            styles: {
+                font: "helvetica",
+                fontSize: 8.5,
+                textColor: [17, 24, 39],
+                lineColor: [156, 163, 175],
+                lineWidth: 0.2,
+                cellPadding: { top: 2.5, right: 2.2, bottom: 2.5, left: 2.2 },
+                overflow: "linebreak",
+                valign: "top",
+                minCellHeight: 7
+            },
+            headStyles: {
+                fillColor: [22, 101, 52],
+                textColor: [255, 255, 255],
+                fontStyle: "bold",
+                halign: "center",
+                valign: "middle"
+            },
+            alternateRowStyles: { fillColor: [240, 253, 244] },
+            columnStyles: {
+                0: { cellWidth: 12, halign: "center" },
+                1: { cellWidth: contentWidth * 0.40 },
+                2: { cellWidth: contentWidth * 0.27 },
+                3: { cellWidth: contentWidth * 0.33 }
+            },
+            didParseCell: function(data) {
+                if (!productBody.length && data.section === "body") {
+                    data.cell.styles.textColor = [107, 114, 128];
+                    data.cell.styles.fontStyle = "italic";
+                    data.cell.styles.halign = "center";
+                }
+            }
+        });
+
+        let signatureY = doc.lastAutoTable.finalY + 14;
+        if (signatureY + 34 > pageHeight - margin.bottom) {
+            doc.addPage();
+            signatureY = 25;
+        }
+
+        const signatureWidth = 65;
+        const signatureX = pageWidth - margin.right - signatureWidth;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(31, 41, 55);
+        doc.text("Hormat kami,", signatureX + signatureWidth / 2, signatureY, {
+            align: "center"
+        });
+
+        doc.setFont("helvetica", "bold");
+        doc.text(
+            info.signer || "____________________",
+            signatureX + signatureWidth / 2,
+            signatureY + 29,
+            { align: "center", maxWidth: signatureWidth }
+        );
+
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let page = 1; page <= totalPages; page++) {
+            doc.setPage(page);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.setTextColor(107, 114, 128);
+            doc.text("Toko Bejo ATK • Purchasing Order", margin.left, pageHeight - 7);
+            doc.text(`Halaman ${page} dari ${totalPages}`, pageWidth - margin.right, pageHeight - 7, {
+                align: "right"
+            });
+        }
+
+        doc.save(safeFilename(info.poNumber || "Purchasing_Order") + ".pdf");
+    } catch (error) {
+        console.error(error);
+        alert("Gagal membuat PDF. Periksa koneksi internet lalu coba kembali.");
+    } finally {
+        button.disabled = false;
+        button.textContent = "Unduh PDF";
+    }
+}
+
+// ==================================================
+// CETAK
+// ==================================================
+
+function printPO() {
+    const printWindow = window.open("", "_blank");
+
+    if (!printWindow) {
+        alert("Pop-up diblokir browser. Izinkan pop-up lalu coba lagi.");
+        return;
+    }
+
+    const html = `
+        <!DOCTYPE html>
+        <html lang="id">
+        <head>
+            <meta charset="UTF-8">
+            <title>Purchasing Order</title>
+            <style>${documentStyles()}</style>
+        </head>
+        <body>
+            ${buildDocumentHTML()}
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                    }, 500);
+                };
+            <\/script>
+        </body>
+        </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+}
+
+// ==================================================
+// RESET FORMULIR
+// ==================================================
+
+function resetForm() {
+    if (!confirm("Yakin ingin mereset formulir dan daftar barang?")) {
+        return;
+    }
+
+    setPOInfo({
+        supplier: "",
+        date: "",
+        address: "",
+        poNumber: "",
+        up: "",
+        signer: ""
+    });
+
+    setValue("productName", "");
+    setValue("productPlan", "");
+    setValue("productStock", "");
+
+    products = [];
+
+    clearUpload();
+    closeEdit();
+    renderProducts();
+}
+
+// ==================================================
+// INISIALISASI
+// ==================================================
+
+renderProducts();
+</script>
+
+</body>
+</html>
